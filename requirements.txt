@@ -1,0 +1,1 @@
+wrenai[postgres,mcp]==0.18.0

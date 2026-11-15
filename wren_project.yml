@@ -1,0 +1,6 @@
+schema_version: 5
+name: sakura_users_mvp
+version: "0.1"
+catalog: wren
+schema: public
+data_source: postgres

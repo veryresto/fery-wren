@@ -1,0 +1,16 @@
+name: profiles
+table_reference:
+  schema: public
+  table: profiles
+primary_key: id
+properties:
+  description: One row per user profile. approval_status is the current state.
+columns:
+  - name: id
+    type: VARCHAR
+    is_primary_key: true
+    not_null: true
+  - name: full_name
+    type: VARCHAR
+  - name: approval_status
+    type: VARCHAR

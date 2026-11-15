@@ -1,0 +1,8 @@
+datasource: postgres
+host: ${SAKURA_DB_HOST}
+port: ${SAKURA_DB_PORT}
+database: ${SAKURA_DB_NAME}
+user: ${SAKURA_DB_USER}
+password: ${SAKURA_DB_PASSWORD}
+kwargs:
+  sslmode: require

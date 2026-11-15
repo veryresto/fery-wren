@@ -1,0 +1,18 @@
+name: governance_events
+table_reference:
+  schema: public
+  table: governance_events
+primary_key: id
+properties:
+  description: Governance audit events; APPROVAL_GRANTED is verifier approval.
+columns:
+  - name: id
+    type: VARCHAR
+    is_primary_key: true
+    not_null: true
+  - name: target_user_id
+    type: VARCHAR
+  - name: action
+    type: VARCHAR
+  - name: created_at
+    type: TIMESTAMP
