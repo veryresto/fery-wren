@@ -153,13 +153,13 @@ columns:
     type: VARCHAR
 ```
 
-The actual file also has a description. We mapped source UUID IDs to Wren `VARCHAR` and source `timestamptz` to Wren `TIMESTAMP`. Compilation and offline planning passed; a live Wren query is still needed to confirm runtime type behavior. We omitted email, event properties, and governance metadata because the question does not need them. This keeps the agent-facing schema focused. Database permissions remain the stronger access boundary.
+The actual file also has a description. We mapped source UUID IDs to Wren `VARCHAR` and source `timestamptz` to Wren `TIMESTAMP`. Live query execution passed with those mappings. We omitted email, event properties, and governance metadata because the question does not need them. This keeps the agent-facing schema focused. Database permissions remain the stronger access boundary.
 
 The two event models repeat the same mapping pattern. In `profile_events`, `table_reference.table: analytics_events`, `user_id` identifies the subject, and `event_name` lets the view select only `profile_completed`. In `governance_events`, `table_reference.table: governance_events`, `target_user_id` identifies the subject, and `action` lets the view select only `APPROVAL_GRANTED`. Both expose `created_at` for the date calculation. This is how a physical event log becomes a small, readable semantic input.
 
 ## 3. Combine evidence in a Wren view
 
-The event tables can contain many rows per user. Joining them raw to `profiles` could multiply users. The [users_with_review_dates view](../views/users_with_review_dates/metadata.yml) filters and groups each event type **before** joining it to profiles:
+The event tables can contain many rows per user. Joining them raw to `profiles` could multiply users. The [users_with_review_dates view](../views/users_with_review_dates/metadata.yml) filters and groups each event type **before** joining it to profiles. In the tested Wren 0.18.0 PostgreSQL execution path, use bare model names in both view statements and client queries; the generated SQL did not resolve `wren.public.*` references at execution time:
 
 ```sql
 SELECT p.id AS user_id,
@@ -167,16 +167,16 @@ SELECT p.id AS user_id,
        p.approval_status,
        s.submitted_at,
        a.approved_at
-FROM wren.public.profiles p
+FROM profiles p
 LEFT JOIN (
   SELECT user_id, MIN(created_at) AS submitted_at
-  FROM wren.public.profile_events
+  FROM profile_events
   WHERE event_name = 'profile_completed'
   GROUP BY user_id
 ) s ON p.id = s.user_id
 LEFT JOIN (
   SELECT target_user_id, MIN(created_at) AS approved_at
-  FROM wren.public.governance_events
+  FROM governance_events
   WHERE action = 'APPROVAL_GRANTED'
   GROUP BY target_user_id
 ) a ON p.id = a.target_user_id
@@ -226,10 +226,10 @@ The [requirements file](../requirements.txt) pins `wrenai[postgres,mcp]==0.18.0`
 - `context instructions` printed the `knowledge/rules/` text.
 - `dry-plan` expanded a query against the three physical `public` tables without connecting. The `--datasource postgres` flag was needed because no profile is bound yet.
 
-These checks do **not** prove that a live Wren query returns the expected rows. We separately checked the date logic with the read-only PostgreSQL query in section 1. `wren memory index` reports zero confirmed pairs in `knowledge/sql/`, which is expected; add a question-to-SQL example only after verifying a live answer.
+We then ran the view through the remote MCP `run_sql` tool. It returned 39 users: 8 unsubmitted, 1 pending, 28 approved, and 2 suspended. Submission dates were present for all pending and approved users. Approval dates were present for 27 approved and 2 suspended users. This agrees with the direct database check in section 1. `wren memory index` reports zero confirmed pairs in `knowledge/sql/`; a confirmed question-to-SQL example can now be added when we review the exact answer format together.
 
-## 6. Next steps, not yet completed
+## 6. Connect and serve the MVP
 
-The checked-in [.env.example](../.env.example) and [connection.example.yml](../connection.example.yml) show the connection fields. This workspace cannot reach Sakura3's IPv6-only direct database host, so use the **session pooler** host, port, and username shown in the Supabase project's **Connect** dialog. Put real credentials in ignored `.env`. A local test can use the project database password; use a SELECT-only database role before exposing MCP beyond this machine. Inspect the installed connector with `.venv/bin/wren docs connection-info postgres`, then add and bind a profile. Run a live modeled query and compare its row count and dates with the PostgreSQL check above. Finally run `wren serve mcp` and inspect the schema, knowledge, and query tools from an MCP client. The [connection guide](https://docs.getwren.ai/oss/guides/connect) and [MCP guide](https://docs.getwren.ai/oss/guides/mcp) cover those commands.
+The checked-in [.env.example](../.env.example) and [connection.example.yml](../connection.example.yml) show the connection fields. This workspace cannot reach Sakura3's IPv6-only direct database host, so use the **session pooler** host, port, and username shown in the Supabase project's **Connect** dialog. Put real credentials in ignored `.env`. The [remote MCP guide](deploy-remote-mcp.md) explains the restricted database role, Wren profile, systemd service, Caddy TLS/authentication, and external client test. The [Wren connection guide](https://docs.getwren.ai/oss/guides/connect) and [MCP guide](https://docs.getwren.ai/oss/guides/mcp) explain the underlying commands.
 
 Before extending the MVP, a reader should be able to explain: why current status cannot provide a date; why `target_user_id` is the correct governance field; why aggregation happens before joins; why missing events yield nulls; and why the SQL rule lives in a view while interpretation lives in `knowledge/`.

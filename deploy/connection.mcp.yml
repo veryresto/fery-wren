@@ -1,0 +1,8 @@
+datasource: postgres
+host: ${WREN_DB_HOST}
+port: ${WREN_DB_PORT}
+database: ${WREN_DB_NAME}
+user: ${WREN_DB_USER}
+password: ${WREN_DB_PASSWORD}
+kwargs:
+  sslmode: require

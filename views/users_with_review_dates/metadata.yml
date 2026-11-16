@@ -7,16 +7,16 @@ statement: |
          p.approval_status,
          s.submitted_at,
          a.approved_at
-  FROM wren.public.profiles p
+  FROM profiles p
   LEFT JOIN (
     SELECT user_id, MIN(created_at) AS submitted_at
-    FROM wren.public.profile_events
+    FROM profile_events
     WHERE event_name = 'profile_completed'
     GROUP BY user_id
   ) s ON p.id = s.user_id
   LEFT JOIN (
     SELECT target_user_id, MIN(created_at) AS approved_at
-    FROM wren.public.governance_events
+    FROM governance_events
     WHERE action = 'APPROVAL_GRANTED'
     GROUP BY target_user_id
   ) a ON p.id = a.target_user_id

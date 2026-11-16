@@ -1,0 +1,20 @@
+[Unit]
+Description=Fery Wren MCP server
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/home/ubuntu/oprek/fery-wren
+EnvironmentFile=/etc/fery-wren/wren.env
+ExecStart=/home/ubuntu/oprek/fery-wren/.venv/bin/wren serve mcp --transport http --host 127.0.0.1 --port 8080 --profile sakura_mcp_reader --quiet
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=read-only
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

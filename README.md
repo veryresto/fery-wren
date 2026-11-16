@@ -7,7 +7,7 @@ This project models users in `sakura3Prod` with their first submission event and
 ## Current state
 
 - Wren 0.18.0 compiled and validated 3 models and 1 view.
-- Offline SQL planning and knowledge-rule retrieval passed.
-- A PostgreSQL connection profile, live Wren query, and connected MCP test remain to be done.
+- A live Wren query and an authenticated remote MCP client both returned the expected 39-profile result.
+- The remote endpoint is `https://konteks.veryresto.com/mcp`; deployment and client setup are explained in [the remote MCP guide](docs/deploy-remote-mcp.md).
 
-For those next steps, use [.env.example](.env.example) and [connection.example.yml](connection.example.yml) with a SELECT-only database role. Keep real credentials in ignored `.env`.
+For a local setup, use [.env.example](.env.example) and [connection.example.yml](connection.example.yml). Keep real credentials in ignored `.env`.
